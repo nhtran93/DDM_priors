@@ -1,0 +1,743 @@
+---
+title: "Fitting Distribution Dunctions to Empirical Dustribution of Paramter Estimates"
+output: pdf_document
+---
+
+```{r loading packages, message=FALSE, warning=FALSE, include=FALSE}
+rm(list = ls())
+source("helpers.R")
+
+set.seed(1234)
+load(file = "../data/DDM_cleaned.RData")
+```
+
+```{r Summary, message=FALSE, warning=FALSE, include=FALSE}
+
+summary(v$v)
+summary(a$a)
+summary(zr$zr)
+summary(z$z)
+summary(ter$ter)
+summary(sv$sv)
+summary(sz$sz)
+summary(ster$ster)
+
+```
+
+#  Fitting one distribution
+## Drift Rate
+
+```{r Drift Rate, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(1, 2))
+drift_normal <- fit_Normal(estimate = v$v,
+                                    dis = "normal", bins = 80)
+drift_t <- fit_t(estimate = v$v)
+
+par(mfrow = c(1, 1))
+
+drift_compared_one <- round(cbind(AIC(drift_normal), 
+                                           AIC(drift_t)), 2)
+drift_compared_one <-  data.frame(rbind(c("normal", "t"), drift_compared_one))
+
+
+```
+
+```{r Fitting mixture mirrored Drift Rate, message=FALSE, warning=FALSE, include=FALSE}
+
+drift_mix_norm <- mix_normal(estimate = v$v, mean = mean(v$v),
+                               sd =  sd(v$v ), mean1 = 1, sd1 = 2, prob = 0.5,
+                               txt = "Drift rate: mixture nomal")
+
+
+drift_mix_comp <- round(data.frame(drift_mix_norm$AIC), 2)
+drift_mix_comp <- rbind(c("norm mix", drift_mix_comp))
+
+```
+
+```{r Drift distribution comparison, message=FALSE, warning=FALSE, include=FALSE}
+drift_compare <- cbind(drift_compared_one, t(drift_mix_comp))
+rownames(drift_compare) <- NULL
+kable(drift_compare, caption = "Drift Rate: Model Selection")
+```
+
+## Boundary Separation
+```{r Fitting Boundary Separation, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(3, 2))
+boundary_normal <- fit_trunc_Normal(estimate = a$a, mean = 2, sd = 0.9, bins = 80, lower = 0, upper = Inf)
+boundary_t <- fit_trunc_t(a$a, location = 2, scale = 0.5, df = 3, lower = 0, upper = Inf)
+boundary_gamma <- fit_Gamma(estimate = a$a[a$a >0])
+boundary_log <- fit_log(estimate = a$a[a$a >0])
+boundary_weibull <- fit_weibull(estimate = a$a[a$a >0])
+par(mfrow = c(1, 1))
+
+boundary_compare_one <- round(cbind(AIC(boundary_normal), AIC(boundary_t),
+                                    AIC(boundary_gamma), AIC(boundary_log), AIC(boundary_weibull)), 2)
+boundary_compare_one <- data.frame(rbind(c("truncated normal", "t", "gamma", "lognormal", "weibull"), boundary_compare_one))
+
+```
+
+```{r Fitting mixture Boundary Separation, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(2,2))
+boundary_mix_tnorm <- mix_tnorm(estimate = a$a,
+                                mean = mean(a$a),
+                                sd =  sd(a$a), mean1 = mean(a$a), sd1 = 0.5, prob = 0.5,
+                                txt = "Boundary: mixture nomal")
+
+boundary_mix_gamma <- mix_gamma(estimate = a$a,
+                             shape = 1.530, rate = 0.598,
+                             shape1 = 2 , rate1 = 1, prob = 0.5, txt = "Boundary: mixture gamma")
+
+boundary_mix_gamma_tnorm <- mix_gamma_tnorm(a$a,
+                                         mean = mean(a$a),
+                                         sd = sd(a$a), shape = 9, rate = 5,
+                                         prob = 0.5, txt = "Boundary rate: mixture gamma and tnorm")
+
+boundary_mix_lognormal_tnorm <- mix_ln_tnorm(a$a,
+                                          mean = mean(a$a),
+                                         sd = sd(a$a),
+                                         meanlog = 0, sdlog = sd(a$a), prob = 0.3,
+                                         txt = "Boundary: Mixture lognormal and normal")
+par(mfrow = c(1,1))
+
+boundary_mix_comp <- round(data.frame(cbind(boundary_mix_tnorm$AIC, boundary_mix_gamma$AIC,
+                                         boundary_mix_gamma_tnorm$AIC, 
+                                         boundary_mix_lognormal_tnorm$AIC)), 2)
+boundary_mix_comp <- rbind(c("tnorm & tnorm", "gamma & gamma", "gamma & tnorm",
+                             "lognormal & tnorm"), boundary_mix_comp)
+
+boundary_compare <- cbind(boundary_compare_one, boundary_mix_comp)
+kable(boundary_compare, caption = "Boundary Separation: Model Selection")
+```
+
+## Bias
+
+```{r Bias, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(3, 2))
+bias_normal <- fit_trunc_Normal(estimate = zr$zr, mean = 0.5, sd = 0.2, bins = 80, lower = 0, upper = 1)
+bias_t <- fit_trunc_t_bias(zr$zr, location = 1, scale = 2, lower = 0, upper = 1, df =2)
+
+bias_compare_one <- round(cbind(AIC(bias_normal), AIC(bias_t)), 2)
+bias_compare_one <- data.frame(rbind(c("truncated normal", " truncated t"), bias_compare_one))
+
+```
+
+## Mirrored Bias
+
+```{r Mirrored Bias, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(3, 2))
+mirrored_bias_normal <- fit_trunc_Normal(estimate = zr_mirrored, mean = 0.5, sd = 0.2, bins = 80, lower = 0, upper = 1)
+mirrored_bias_t <- fit_trunc_t_bias(zr_mirrored, location = 1, scale = 2, lower = 0, upper = 1, df =2)
+
+mirrored_bias_compare_one <- round(cbind(AIC(mirrored_bias_normal), AIC(mirrored_bias_t)), 2)
+mirrored_bias_compare_one <- data.frame(rbind(c("truncated normal", " truncated t"), mirrored_bias_compare_one))
+
+```
+
+## Starting point
+
+```{r Fitting z, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(3, 2))
+start_normal <- fit_trunc_Normal(estimate = z$z, mean = 0.7, sd = 0.5, bins = 100, lower = 0, upper = Inf)
+start_t <- fit_trunc_t(z$z, location = 0.68,
+                       df = 2.5, scale = 0.19, lower = 0, upper = Inf)
+start_gamma <- fit_Gamma(estimate = z$z)
+start_log <- fit_log(estimate = z$z)
+start_weibull <- fit_weibull(estimate = z$z)
+
+par(mfrow = c(1, 1))
+
+start_compare_one <- round(cbind(AIC(start_normal), AIC(start_t),
+                                    AIC(start_gamma), AIC(start_log),
+                                AIC(start_weibull)), 2)
+start_compare_one <- data.frame(rbind(c("truncated normal", "t", "gamma", "lognormal", "weibull"), start_compare_one))
+
+```
+
+```{r Fitting mixture z, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(2,2))
+start_mix_tnorm <- mix_tnorm(estimate = z$z[z$z < 3],
+                             mean = mean(z$z),
+                             sd =  sd(z$z), mean1 =mean(z$z), sd1 = sd(z$z), prob = 0.5,
+                             txt = "Start Point: mixture nomal")
+
+start_mix_gamma <- mix_gamma(estimate = z$z,
+                             shape = 11, rate = 22,
+                             shape1 = 2 , rate1 = 1, prob = 0.5, txt = "Start Point: mixture gamma")
+
+start_mix_gamma_tnorm <- mix_gamma_tnorm(z$z,
+                                         mean = mean(z$z),
+                                         sd = sd(z$z), shape = 10, rate = 15,
+                                         prob = 0.2, txt = "Start Point: mixture gamma and tnorm")
+
+start_mix_lognormal_tnorm <- mix_ln_tnorm(z$z,
+                                          mean = mean(z$z),
+                                         sd = sd(z$z),
+                                         meanlog = 0, sdlog = 0.5, prob = 0.2,
+                                         txt = "Start Point: Mixture lognormal and normal")
+par(mfrow = c(1,1))
+
+start_mix_comp <- round(data.frame(cbind(start_mix_tnorm$AIC, start_mix_gamma$AIC,
+                                         start_mix_gamma_tnorm$AIC, 
+                                         start_mix_lognormal_tnorm$AIC)), 2)
+start_mix_comp <- rbind(c("tnorm & tnorm", "gamma & gamma", "gamma & tnorm",
+                             "lognormal & tnorm"), start_mix_comp)
+
+
+start_compare <- cbind(start_compare_one, start_mix_comp)
+kable(start_compare, caption = "start point: Model Selection")
+```
+
+## Non-decision time
+
+```{r Fitting ter, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(3, 2))
+ter_normal <- fit_trunc_Normal(estimate = ter$ter, mean = mean(ter$ter), sd = sd(ter$ter), bins = 100, lower = 0, upper = Inf)
+ter_t <- fit_trunc_t(estimate = ter$ter, location = 1, scale = 1, df=3, lower = 0, upper = Inf)
+ter_gamma <- fit_Gamma(estimate = ter$ter[which(ter$ter > 0)])
+ter_log <- fit_log(estimate = ter$ter[which(ter$ter > 0)])
+ter_weibull <- fit_weibull(estimate = ter$ter[which(ter$ter > 0)])
+par(mfrow = c(1, 1))
+
+ter_compare_one <- round(cbind(AIC(ter_normal), AIC(ter_t),
+                                    AIC(ter_gamma), AIC(start_log),
+                                AIC(ter_weibull)), 2)
+ter_compare_one <- data.frame(rbind(c("truncated normal", "t", "gamma", "lognormal", "weibull"), ter_compare_one))
+
+```
+
+```{r Fitting mixture ter, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(2,2))
+ter_mix_tnorm <- mix_tnorm(estimate = ter$ter[which(ter$ter > 0)],
+                           mean = mean(ter$ter),
+                           sd =  0.2,
+                           mean1 = 0.3, sd1 = sd(ter$ter), prob = 0.5,
+                           txt = "Ter: mixture nomal")
+
+ter_mix_gamma <- mix_gamma(estimate = ter$ter[which(ter$ter > 0)],
+                             shape = 60, rate = 10,
+                             shape1 = 10 , rate1 = 15, prob = 0.5, txt = "Ter: mixture gamma")
+
+ter_mix_gamma_tnorm <- mix_gamma_tnorm(ter$ter[which(ter$ter > 0)],
+                                       mean = mean(ter$ter),
+                                       sd = sd(ter$ter), shape = 2, rate = 5,
+                                       prob = 0.5, txt = "Ter: mixture gamma and tnorm")
+
+ter_mix_lognormal_tnorm <- mix_ln_tnorm(ter$ter[which(ter$ter > 0)],
+                                          mean = mean(ter$ter),
+                                         sd = sd(ter$ter),
+                                         meanlog = log(mean(ter$ter)), 
+                                        sdlog = log(sd(ter$ter)), prob = 0.4,
+                                         txt = "Ter: Mixture lognormal and normal")
+par(mfrow = c(1,1))
+
+ter_mix_comp <- round(data.frame(cbind(ter_mix_tnorm$AIC, ter_mix_gamma$AIC,
+                                         ter_mix_gamma_tnorm$AIC, 
+                                         ter_mix_lognormal_tnorm$AIC)), 2)
+ter_mix_comp <- rbind(c("tnorm & tnorm", "gamma & gamma", "gamma & tnorm",
+                             "lognormal & tnorm"), ter_mix_comp)
+
+ter_compare <- cbind(ter_compare_one, ter_mix_comp)
+kable(ter_compare, caption = "ter: Model Selection")
+
+```
+
+
+## sv
+
+```{r Fitting sv, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(3, 2))
+sv_normal <- fit_trunc_Normal(estimate = sv$sv, mean = 1.4, sd = 1, bins = 100, lower = 0, upper = Inf)
+sv_t <- fit_trunc_t(estimate = sv$sv[sv$sv>=0], location = 1, scale = 0.5, df =3, lower = 0, upper = Inf)
+sv_gamma <- fit_Gamma(estimate = sv$sv[sv$sv>0])
+sv_log <- fit_log(estimate =sv$sv[sv$sv>0])
+sv_weibull <- fit_weibull(estimate = sv$sv[sv$sv>0])
+par(mfrow = c(1, 1))
+
+sv_compare_one <- round(cbind(AIC(sv_normal), AIC(sv_t),
+                                    AIC(sv_gamma), AIC(sv_log),
+                                AIC(sv_weibull)), 2)
+sv_compare_one <- data.frame(rbind(c("truncated normal", "t", "gamma", "lognormal", "weibull"), sv_compare_one))
+
+```
+
+```{r Fitting mixture sv, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(2,2))
+sv_mix_tnorm <- mix_tnorm(estimate = sv$sv[sv$sv > 0],
+                                mean = mean(sv$sv),
+                               sd =  sd(sv$sv), mean1 = 1, sd1 = 0.6, prob = 0.7,
+                               txt = "sv: mixture nomal")
+
+sv_mix_gamma <- mix_gamma(estimate = sv$sv[sv$sv > 0],
+                             shape = 1, rate = 3,
+                             shape1 = 2 , rate1 =  10, prob = 0.5, txt = "sv: mixture gamma")
+
+sv_mix_gamma_tnorm <- mix_gamma_tnorm(sv$sv[sv$sv > 0],
+                                         mean = mean(sv$sv),
+                                         sd = sd(sv$sv), shape = 1, rate = 1,
+                                         prob = 0.3, txt = "sv: mixture gamma and tnorm")
+
+sv_mix_lognormal_tnorm <- mix_ln_tnorm(sv$sv[sv$sv > 0],
+                                          mean = mean(sv$sv),
+                                         sd = sd(sv$sv),
+                                         meanlog = 0.5, sdlog = 0.3, prob = 0.2,
+                                         txt = "sv: Mixture lognormal and normal")
+par(mfrow = c(1,1))
+
+sv_mix_comp <- round(data.frame(cbind(sv_mix_tnorm$AIC, sv_mix_gamma$AIC,
+                                         sv_mix_gamma_tnorm$AIC, 
+                                         sv_mix_lognormal_tnorm$AIC)), 2)
+sv_mix_comp <- rbind(c("tnorm & tnorm", "gamma & gamma", "gamma & tnorm",
+                             "lognormal & tnorm"), sv_mix_comp)
+
+sv_compare <- cbind(sv_compare_one, sv_mix_comp)
+kable(sv_compare, caption = "sv: Model Selection")
+```
+
+## relative sz
+```{r Fitting relative sz, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(3, 2))
+rel_sz_normal <- fit_trunc_Normal(estimate = sz_relative$sz_relative, mean = 0.7, sd = 0.5, bins = 100, lower = 0, upper = 1)
+rel_sz_t <- fit_trunc_t(estimate = sz_relative$sz_relative, location = 0.5, scale = 1, df = 2, lower = 0, upper = 1)
+
+rel_sz_compare_one <- round(cbind(AIC(rel_sz_normal), AIC(rel_sz_t)), 2)
+rel_sz_compare_one <- data.frame(rbind(c("truncated normal", "t"), rel_sz_compare_one))
+
+```
+
+## sz
+
+```{r Fitting sz, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(3, 2))
+sz_normal <- fit_trunc_Normal(estimate = sz$sz, mean = 0.7, sd = 0.5, bins = 100, lower = 0, upper = Inf)
+sz_t <- fit_trunc_t(estimate = sz$sz, location = 0.5, scale = 1, df = 2, lower = 0, upper = Inf)
+sz_gamma <- fit_Gamma(estimate = sz$sz)
+sz_log <- fit_log(estimate =sz$sz)
+sz_weibull <- fit_weibull(estimate = sz$sz)
+par(mfrow = c(1, 1))
+
+sz_compare_one <- round(cbind(AIC(sz_normal), AIC(sz_t),
+                                    AIC(sz_gamma), AIC(sz_log),
+                                AIC(sz_weibull)), 2)
+sz_compare_one <- data.frame(rbind(c("truncated normal", "t", "gamma", "lognormal", "weibull"), sz_compare_one))
+
+kable(sz_compare_one, caption = "sz: Model Selection")
+
+```
+
+```{r Fitting mixture sz, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(2,2))
+sz_mix_tnorm <- mix_tnorm(estimate = sz$sz,
+                                mean = mean(sz$sz),
+                               sd =  sd(sz$sz), mean1 = 0.1, sd1 = 1, prob = 0.5,
+                               txt = "st: mixture nomal")
+
+sz_mix_gamma <- mix_gamma(estimate = sz$sz[sz$sz > 0],
+                             shape = 1, rate = 10,
+                             shape1 = 2 , rate1 = 20, prob = 0.5, txt = "st: mixture gamma")
+
+sz_mix_gamma_tnorm <- mix_gamma_tnorm(sz$sz[sz$sz>0],
+                                         mean = mean(sz$sz),
+                                         sd = sd(sz$sz), shape = 1, rate = 1.8,
+                                         prob = 0.3, txt = "st: mixture gamma and tnorm")
+
+sz_mix_lognormal_tnorm <- mix_ln_tnorm(sz$sz,
+                                          mean = mean(sz$sz),
+                                         sd = sd(sz$sz),
+                                         meanlog = 0, sdlog = 1, prob = 0.6,
+                                         txt = "st: Mixture lognormal and normal")
+par(mfrow = c(1,1))
+
+sz_mix_comp <- round(data.frame(cbind(sz_mix_tnorm$AIC, sz_mix_gamma$AIC,
+                                         sz_mix_gamma_tnorm$AIC, 
+                                         sz_mix_lognormal_tnorm$AIC)), 2)
+sz_mix_comp <- rbind(c("tnorm & tnorm", "gamma & gamma", "gamma & tnorm",
+                             "lognormal & tnorm"), sz_mix_comp)
+
+sz_compare <- cbind(sz_compare_one, sz_mix_comp)
+
+kable(sz_compare, caption = "st: Model Selection")
+
+```
+
+## ster
+
+```{r Fitting ster, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(3, 2))
+st_normal <- fit_trunc_Normal(estimate = ster$ster, mean = 0.3, sd = 0.5, bins = 100, lower = 0, upper = Inf)
+st_t <- fit_trunc_t(estimate = ster$ster, location = 0.3, scale = 1, df = 2, lower = 0, upper = Inf)
+st_gamma <- fit_Gamma(estimate = ster$ster[ster$ster > 0])
+st_log <- fit_log(estimate = ster$ster[ster$ster > 0])
+st_weibull <- fit_weibull(estimate = ster$ster[ster$ster> 0])
+par(mfrow = c(1, 1))
+
+ster_compare_one <- round(cbind(AIC(st_normal), AIC(st_t),
+                                    AIC(st_gamma), AIC(st_log),
+                                AIC(st_weibull)), 2)
+ster_compare_one <- data.frame(rbind(c("truncated normal", "t", "gamma", "lognormal", "weibull"), ster_compare_one))
+
+```
+
+```{r Fitting mixture ster, message=FALSE, warning=FALSE, include=FALSE}
+par(mfrow = c(2,2))
+st_mix_tnorm <- mix_tnorm(estimate = ster$ster[which(ster$ster > 0)],
+          mean = mean(ster$ster[which(ster$ster > 0)]),
+          sd =  sd(ster$ster), mean1 = 0.2,
+          sd1 = 0.01, prob = 0.5,
+          txt = "ster: mixture nomal")
+
+st_mix_gamma <- mix_gamma(estimate = ster$ster[ster$ster>0],
+                             shape = 1, rate = 1,
+                             shape1 = 2 , rate1 = 9, prob = 0.5, txt = "ster: mixture gamma")
+
+st_mix_gamma_tnorm <- mix_gamma_tnorm(ster$ster[ster$ster>0],
+                mean = 0.17,
+                sd = 0.05, shape = 12, rate = 75,
+                prob = 0.5, txt = "ster: mixture gamma and tnorm")
+
+st_mix_lognormal_tnorm <- mix_ln_tnorm(ster$ster[ster$ster>0],
+                                          mean = 0.17,
+                                         sd = 0.05,
+                                         meanlog = -2,
+                                       sdlog = 1.5, prob = 0.6,
+                                         txt = "ster: Mixture lognormal and normal")
+par(mfrow = c(1,1))
+
+st_mix_comp <- round(data.frame(cbind(st_mix_tnorm$AIC, st_mix_gamma$AIC,
+                                         st_mix_gamma_tnorm$AIC, 
+                                         st_mix_lognormal_tnorm$AIC)), 2)
+st_mix_comp <- rbind(c("tnorm & tnorm", "gamma & gamma", "gamma & tnorm",
+                             "lognormal & tnorm"), st_mix_comp)
+
+ster_compare <- cbind(ster_compare_one, st_mix_comp)
+
+kable(ster_compare, caption = "st: Model Selection")
+
+```
+
+# Model Selection: Representative distributions
+
+```{r Priors, message=FALSE, warning=FALSE, include=FALSE}
+
+drift_compare <- as.data.frame(t(drift_compare))
+drift_compare[, 1] <- as.character(drift_compare[, 1])
+drift_compare[, 2] <- as.numeric(drift_compare[, 2])
+drift_compare$waic <- round(wAIC(drift_compare[, 2])$weights, 2)
+drift_compare_final <- drift_compare[which.min(drift_compare$V2), ]
+
+boundary_compare <- as.data.frame(t(boundary_compare))
+boundary_compare[, 1] <- as.character(boundary_compare[, 1])
+boundary_compare$V2<- as.numeric(as.character(boundary_compare$V2))
+boundary_compare$wAIC <- round(wAIC(boundary_compare[, 2])$weights, 2)
+boundary_compare_final <- boundary_compare[which.min(boundary_compare$V2), ]
+
+start_compare <- as.data.frame(t(start_compare))
+start_compare[, 1] <- as.character(start_compare[, 1])
+start_compare[, 2] <- as.numeric(as.character(start_compare[, 2]))
+start_compare$wAIC <- round(wAIC(start_compare[, 2])$weights, 2)
+start_compare_final <- start_compare[which.min(start_compare$V2), ]
+
+bias_compare <- as.data.frame(t(bias_compare_one))
+bias_compare[, 1] <- as.character(bias_compare[, 1])
+bias_compare[, 2] <- as.numeric(as.character(bias_compare[, 2]))
+bias_compare$wAIC <- round(wAIC(bias_compare[, 2])$weights, 2)
+bias_compare_final <- bias_compare[which.min(bias_compare$V2), ]
+
+mirrored_bias_compare <- as.data.frame(t(mirrored_bias_compare_one))
+mirrored_bias_compare[, 1] <- as.character(mirrored_bias_compare[, 1])
+mirrored_bias_compare[, 2] <- as.numeric(as.character(mirrored_bias_compare[, 2]))
+mirrored_bias_compare$wAIC <- round(wAIC(mirrored_bias_compare[, 2])$weights, 2)
+mirrored_bias_compare_final <- mirrored_bias_compare[which.min(mirrored_bias_compare$V2), ]
+
+ter_compare <- as.data.frame(t(ter_compare))
+ter_compare[, 1] <- as.character(ter_compare[, 1])
+ter_compare[, 2] <- as.numeric(as.character(ter_compare[, 2]))
+ter_compare$wAIC <- round(wAIC(ter_compare[, 2])$weights, 2)
+ter_compare_final <- ter_compare[which.min(ter_compare$V2), ]
+
+
+sv_compare <- as.data.frame(t(sv_compare))
+sv_compare[, 1] <- as.character(sv_compare[, 1])
+sv_compare[, 2] <- as.numeric(as.character(sv_compare[, 2]))
+sv_compare$wAIC <- round(wAIC(sv_compare[, 2])$weights, 2)
+sv_compare_final <- sv_compare[which.min(sv_compare$V2), ]
+
+sz_compare <- as.data.frame(t(sz_compare))
+sz_compare[, 1] <- as.character(sz_compare[, 1])
+sz_compare[, 2] <- as.numeric(as.character(sz_compare[, 2]))
+sz_compare$wAIC <- round(wAIC(sz_compare[, 2])$weights, 2)
+sz_compare_final <- sz_compare[which.min(sz_compare$V2), ]
+
+
+relative_sz_compare <- as.data.frame(t(rel_sz_compare_one))
+relative_sz_compare[, 1] <- as.character(relative_sz_compare[, 1])
+relative_sz_compare[, 2] <- as.numeric(as.character(relative_sz_compare[, 2]))
+relative_sz_compare$wAIC <- round(wAIC(relative_sz_compare[, 2])$weights, 2)
+relative_sz_compare_final <- relative_sz_compare[which.min(relative_sz_compare$V2), ]
+
+ster_compare <- as.data.frame(t(ster_compare))
+ster_compare[, 1] <- as.character(as.character(ster_compare[, 1]))
+ster_compare[, 2] <- as.numeric(as.character(ster_compare[, 2]))
+ster_compare$wAIC <- round(wAIC(ster_compare[, 2])$weights, 2)
+ster_compare_final <- ster_compare[which.min(ster_compare$V2), ]
+
+```
+
+
+
+```{r Prior Plots, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+# png(filename = "DDM_priors.png", width = 1500, height = 1000, units = "px")
+postscript(file = "../plots/DDM_Priors.eps", onefile = TRUE, horizontal = FALSE,
+           width = 11, height = 11)
+par(mfrow = c (5, 2))
+
+# v
+par(cex.main = 1.5, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5 ,
+    font.lab = 1.5, cex.axis = 1, bty = "n", las = 1)
+h <- hist(v$v, freq = FALSE, main = "", xlab = "", ylab = " Density",
+          ylim = c(0, 0.3),
+          xlim = c(-10, 20), axes = FALSE, col = "grey", breaks = 80)
+axis(1, seq(-10, 20, by = 10))
+axis(2, seq(0, 0.3, by = .1))
+rug(v$v)
+mtext(paste0("Drift rate v (n = ", nrow(v), ")"), side = 1, line = 2.5, cex = 1, font = 1)
+# lines(density(v$v), lwd = 1)
+curve(dtt(x, location = drift_t$estimate["m"],
+          scale = drift_t$estimate["s"] ,
+          df =  drift_t$estimate["df"], lower = -Inf, upper = Inf),
+      col="red", lwd=2, add=T)
+# a
+par(cex.main = 1.5, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5 ,
+    font.lab = 1.5, cex.axis = 1, bty = "n", las = 1.5)
+h <- hist(a$a, freq = FALSE, main = "", xlab = "", ylab = " Density",
+          ylim = c(0, 1),
+          xlim = c(0, 6), axes = FALSE, col = "grey", breaks = 60)
+axis(1, seq(0, 6, by = 3))
+axis(2, seq(0, 1, by = 0.5))
+rug(a$a)
+mtext(paste0("Boundary separation a (n = ", nrow(a), ")"), side = 1, line = 2.5, cex = 1, font = 1)
+# lines(density(a$a), lwd = 1)
+curve(dgamma(x, shape = boundary_mix_gamma$par$estimate["shape1"], rate = boundary_mix_gamma$par$estimate["rate1"]), col="red", lwd=2, add=T)
+
+# z
+par(cex.main = 1.5, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5 ,
+    font.lab = 1.5, cex.axis = 1, bty = "n", las = 1.5)
+h <- hist(z$z, freq = FALSE, main = "", xlab = "", ylab = " Density",
+          ylim = c(0, 2),
+          xlim = c(0, 3), axes = FALSE, col = "grey", breaks = 80)
+axis(1, seq(0, 3, by = 1))
+axis(2, seq(0, 2, by = 1))
+rug(z$z)
+mtext(paste0("Starting point z (n = ", nrow(z), ")"), side = 1, line = 2.5, cex = 1, font = 1)
+# lines(density(z$z), lwd = 1)
+curve(dnorm(x,  mean = start_mix_lognormal_tnorm$par$estimate["mean"], sd = start_mix_lognormal_tnorm$par$estimate["sd"]), col="red", lwd=2, add=T)
+
+# zr
+par(cex.main = 1.5, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5 ,
+    font.lab = 1.5, cex.axis = 1, bty = "n", las = 1.5)
+h <- hist(zr$zr, freq = FALSE, main = "", xlab = "", ylab = " Density",
+          ylim = c(0, 10),
+          xlim = c(0, 1), axes = FALSE, col = "grey", breaks = 20)
+axis(1, seq(0, 1, by = 0.5))
+axis(2, seq(0, 10, by = 2))
+rug(zr$zr)
+mtext(paste0("Bias zr (n = ", nrow(zr), ")"), side = 1, line = 2.5, cex = 1, font = 1)
+# lines(density(zr_mirrored), lwd = 1)
+curve(dtt(x, location = bias_t$estimate["location"],
+          scale = bias_t$estimate["scale"],
+          df = bias_t$estimate["df"], lower = 0, upper = 1), col="red", lwd=2, add=T)
+
+# mirrored zr
+par(cex.main = 1.5, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5 ,
+    font.lab = 1.5, cex.axis = 1, bty = "n", las = 1.5)
+h <- hist(zr_mirrored, freq = FALSE, main = "", xlab = "", ylab = " Density",
+          ylim = c(0, 10),
+          xlim = c(0, 1), axes = FALSE, col = "grey", breaks = 20)
+axis(1, seq(0, 1, by = 0.5))
+axis(2, seq(0, 10, by = 2))
+rug(zr_mirrored)
+mtext(paste0("Mirrored zr_mirrored (n = ", length(zr_mirrored), ")"),
+      side = 1, line = 2.5, cex = 1, font = 1)
+# lines(density(zr_mirrored), lwd = 1)
+curve(dtt(x, location = mirrored_bias_t$estimate["location"], scale = mirrored_bias_t$estimate["scale"],
+                df = mirrored_bias_t$estimate["df"], lower = 0, upper = 1), col="red", lwd=2, add=T)
+
+# Ter
+par(cex.main = 1.5, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5 ,
+    font.lab = 1.5, cex.axis = 1, bty = "n", las = 1.5)
+h <- hist(ter$ter, freq = FALSE, main = "", xlab = "", ylab = " Density",
+          ylim = c(0, 4),
+          xlim = c(0, 3), axes = FALSE, col = "grey", breaks = 80)
+axis(1, seq(0, 3, by = 1))
+axis(2, seq(0, 4, by = 2))
+rug(ter$ter)
+mtext(paste0("Non-decision time Ter (n = ", nrow(ter), ")"),
+      side = 1, line = 2.5, cex = 1, font = 1)
+# lines(density(ter$ter), lwd = 1)
+curve(dtt(x, ter_t$estimate["location"], scale = ter_t$estimate["scale"],
+                df = ter_t$estimate["df"], lower = 0), col="red", lwd=2, add=T)
+
+# sv
+par(cex.main = 1.5, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5 ,
+    font.lab = 1.5, cex.axis = 1, bty = "n", las = 1.5)
+h <- hist(sv$sv, freq = FALSE, main = "", xlab = "", ylab = " Density",
+          ylim = c(0, 1),
+          xlim = c(0, 5), axes = FALSE, col = "grey", breaks = 20)
+axis(1, seq(0, 5, by = 1))
+axis(2, seq(0, 1, by = 0.5))
+rug(sv$sv)
+mtext(paste0("sv (n = ", nrow(sv), ")"),
+      side = 1, line = 2.5, cex = 1, font = 1)
+# lines(density(sv$drift_variabilityx), lwd = 1)
+curve(dtnorm(x, sv_mix_gamma_tnorm$par$estimate["mean"], sv_mix_gamma_tnorm$par$estimate["sd"], lower = 0), col="red", lwd=2, add=T)
+
+# Absolute sz
+par(cex.main = 1.5, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5 ,
+    font.lab = 1.5, cex.axis = 1, bty = "n", las = 1.5)
+h <- hist(sz$sz, freq = FALSE, main = "", xlab = "", ylab = " Density",
+          ylim = c(0, 3),
+          xlim = c(0, 2), axes = FALSE, col = "grey", breaks = 50)
+axis(1, seq(0, 2, by = 1))
+axis(2, seq(0, 3, by = 1))
+rug(sz$sz)
+mtext(paste0("sz (n = ", nrow(sz), ")"),
+      side = 1, line = 2.5, cex = 1, font = 1)
+# lines(density(na.omit(sz_relative$sz_relative)), lwd = 1)
+curve(dtnorm(x, mean = sz_mix_lognormal_tnorm$par$estimate["mean"], sd =  sz_mix_lognormal_tnorm$par$estimate["sd"], 
+             lower = 0, upper = Inf), col="red", lwd=2, add=T)
+
+# # Relative sz
+par(cex.main = 1.5, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5 ,
+    font.lab = 1.5, cex.axis = 1, bty = "n", las = 1.5)
+h <- hist(sz_relative$sz_relative, freq = FALSE, main = "", xlab = "", ylab = " Density",
+          ylim = c(0, 3),
+          xlim = c(0, 2), axes = FALSE, col = "grey", breaks = 30)
+axis(1, seq(0, 2, by = 1))
+axis(2, seq(0, 3, by = 1))
+rug(sz_relative$sz_relative)
+mtext(paste0("Relative sz = sz/a (n = ", nrow(sz_relative), ")"), side = 1, line = 2.5, cex = 1, font = 1)
+# lines(density(na.omit(sz_relative$sz_relative)), lwd = 1)
+curve(dtnorm(x,  rel_sz_normal$estimate["mean"], rel_sz_normal$estimate["sd"], lower = 0, upper = 1), col="red", lwd=2, add=T)
+
+# ster
+par(cex.main = 1.5, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5,
+    font.lab = 1.5, cex.axis = 1.5, bty = "n", las = 1.5)
+h <- hist(ster$ster, freq = FALSE, main = "", xlab = "", ylab = " Density",
+          ylim = c(0, 8),
+          xlim = c(0, 1), axes = FALSE, col = "grey", breaks = 100)
+axis(1, seq(0, 1, by = 0.5))
+axis(2, seq(0, 10, by = 2))
+rug(ster$ster)
+mtext(paste0("ster (n = ", nrow(ster), ")"),
+      side = 1, line = 2.5, cex = 1, font = 1)
+# lines(density(ster$ster), lwd = 1)
+curve(dtt(x, st_t$estimate["location"], st_t$estimate["scale"], st_t$estimate["df"], 
+          lower = 0, upper = Inf), col="red", lwd=2, add=T)
+
+dev.off()
+
+
+```
+
+
+```{r save data, message=FALSE, warning=FALSE, include=FALSE}
+
+parameter_distributions <- list(
+  v = list(
+    distribution = drift_compare_final,
+    mixing = 0,
+    location = round(drift_t$estimate["m"], 2),
+    scale = round(drift_t$estimate["s"], 2),
+    df = round(drift_t$estimate["df"], 2)
+  ),
+  a = list(
+    distribution = boundary_compare_final$V1,
+    mixing = round(boundary_mix_gamma$par$estimate["prob"], 2),
+    shape = round(boundary_mix_gamma$par$estimate["shape1"], 2),
+    rate = round(boundary_mix_gamma$par$estimate["rate1"], 2)
+  ),
+  z = list(
+    distribution = start_compare_final,
+    mixing = round(start_mix_lognormal_tnorm$par$estimate["prob"], 2),
+    mean = round(start_mix_lognormal_tnorm$par$estimate["mean"], 2),
+    sd = round(start_mix_lognormal_tnorm$par$estimate["sd"], 2)
+  ),
+   zr= list(
+     distribution = bias_compare_final,
+     mixing = 0, 
+     location = round(bias_t$estimate["location"], 2),
+     scale = round(bias_t$estimate["scale"], 2),
+     df = round(bias_t$estimate["df"], 2)
+  ),
+   zr_mirrored = list(
+     distribution = mirrored_bias_compare_final,
+     mixing = 0, 
+     location = round(mirrored_bias_t$estimate["location"], 2),
+     scale = round(mirrored_bias_t$estimate["scale"], 2),
+     df = round(mirrored_bias_t$estimate["df"], 2)
+  ),
+  ter = list(
+    distribution = ter_compare_final,
+    mixing = round(ter_t$estimate["prob"], 2),
+    location = round(ter_t$estimate["location"], 2),
+    scale = round(ter_t$estimate["scale"], 2),
+    df = round(ter_t$estimate["df"], 2)
+  ),
+  sv = list(
+    distribution = sv_compare_final,
+    mixing = round(sv_mix_gamma_tnorm$par$estimate["prob"], 2),
+    mean = round(sv_mix_gamma_tnorm$par$estimate["mean"], 2),
+    sd = round(sv_mix_gamma_tnorm$par$estimate["sd"], 2)
+  ),
+  sz = list(
+    distribution = sz_compare_final,
+    mixing = 0,
+    location = round(sz_t$estimate["location"], 2),
+    scale = round(sz_t$estimate["scale"], 2),
+    df = round(sz_t$estimate["df"], 2)
+  ),
+  relative_sz = list(
+    distribution = relative_sz_compare_final,
+    mean = round(rel_sz_normal$estimate["mean"], 2),
+    sd = round(rel_sz_normal$estimate["sd"], 2)
+  ),
+  ster = list(
+    distribution = ster_compare_final,
+    location = round(st_t$estimate["location"], 2),
+    scale = round(st_t$estimate["scale"], 2),
+    df = round(st_t$estimate["df"], 2)
+  )
+)
+
+save(parameter_distributions, file = "../data/parameter_distributions.RData")
+```
+
+
+```{r print tables, echo=FALSE, message=FALSE, warning=FALSE}
+drift_compare
+colnames(drift_compare) <- c("Distribution Function", "AIC", "wAIC")
+boundary_compare
+colnames(boundary_compare) <- c("Distribution Function", "AIC", "wAIC")
+start_compare
+colnames(start_compare) <- c("Distribution Function", "AIC", "wAIC")
+bias_compare
+colnames(bias_compare) <- c("Distribution Function", "AIC", "wAIC")
+mirrored_bias_compare
+colnames(mirrored_bias_compare) <- c("Distribution Function", "AIC", "wAIC")
+ter_compare
+colnames(ter_compare) <- c("Distribution Function", "AIC", "wAIC")
+sv_compare
+colnames(sv_compare) <- c("Distribution Function", "AIC", "wAIC")
+sz_compare
+colnames(sz_compare) <- c("Distribution Function", "AIC", "wAIC")
+relative_sz_compare
+colnames(relative_sz_compare) <- c("Distribution Function", "AIC", "wAIC")
+ster_compare
+colnames(ster_compare) <- c("Distribution Function", "AIC", "wAIC")
+
+```
+
+
+
+
+

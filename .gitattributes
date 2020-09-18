@@ -1,0 +1,9 @@
+*.csl linguist-detectable=false
+*.bib linguist-detectable=false
+*.md  linguist-detectable=false
+*.eps linguist-detectable=false
+*.ps linguist-detectable=false
+*.jpeg linguist-detectable=false
+*.jpg linguist-detectable=false
+*.png linguist-detectable=false
+*.Rmd linguist-detectable=true
