@@ -1,5 +1,7 @@
 ---
 title: "Fitting Distribution Dunctions to Empirical Dustribution of Paramter Estimates"
+header-includes:
+   - \usepackage{placeins}
 output: pdf_document
 ---
 
@@ -24,8 +26,8 @@ summary(ster$ster)
 
 ```
 
-#  Fitting one distribution
-## Drift Rate
+<!-- #  Fitting one distribution -->
+<!-- ## Drift Rate -->
 
 ```{r Drift Rate, message=FALSE, warning=FALSE, include=FALSE}
 par(mfrow = c(1, 2))
@@ -60,7 +62,7 @@ rownames(drift_compare) <- NULL
 kable(drift_compare, caption = "Drift Rate: Model Selection")
 ```
 
-## Boundary Separation
+<!-- ## Boundary Separation -->
 ```{r Fitting Boundary Separation, message=FALSE, warning=FALSE, include=FALSE}
 par(mfrow = c(3, 2))
 boundary_normal <- fit_trunc_Normal(estimate = a$a, mean = 2, sd = 0.9, bins = 80, lower = 0, upper = Inf)
@@ -109,7 +111,7 @@ boundary_compare <- cbind(boundary_compare_one, boundary_mix_comp)
 kable(boundary_compare, caption = "Boundary Separation: Model Selection")
 ```
 
-## Bias
+<!-- ## Bias -->
 
 ```{r Bias, message=FALSE, warning=FALSE, include=FALSE}
 par(mfrow = c(3, 2))
@@ -121,7 +123,7 @@ bias_compare_one <- data.frame(rbind(c("truncated normal", " truncated t"), bias
 
 ```
 
-## Mirrored Bias
+<!-- ## Mirrored Bias -->
 
 ```{r Mirrored Bias, message=FALSE, warning=FALSE, include=FALSE}
 par(mfrow = c(3, 2))
@@ -133,7 +135,7 @@ mirrored_bias_compare_one <- data.frame(rbind(c("truncated normal", " truncated 
 
 ```
 
-## Starting point
+<!-- ## Starting point -->
 
 ```{r Fitting z, message=FALSE, warning=FALSE, include=FALSE}
 par(mfrow = c(3, 2))
@@ -187,7 +189,7 @@ start_compare <- cbind(start_compare_one, start_mix_comp)
 kable(start_compare, caption = "start point: Model Selection")
 ```
 
-## Non-decision time
+<!-- ## Non-decision time -->
 
 ```{r Fitting ter, message=FALSE, warning=FALSE, include=FALSE}
 par(mfrow = c(3, 2))
@@ -242,7 +244,7 @@ kable(ter_compare, caption = "ter: Model Selection")
 ```
 
 
-## sv
+<!-- ## sv -->
 
 ```{r Fitting sv, message=FALSE, warning=FALSE, include=FALSE}
 par(mfrow = c(3, 2))
@@ -293,7 +295,7 @@ sv_compare <- cbind(sv_compare_one, sv_mix_comp)
 kable(sv_compare, caption = "sv: Model Selection")
 ```
 
-## relative sz
+<!-- ## relative sz -->
 ```{r Fitting relative sz, message=FALSE, warning=FALSE, include=FALSE}
 par(mfrow = c(3, 2))
 rel_sz_normal <- fit_trunc_Normal(estimate = sz_relative$sz_relative, mean = 0.7, sd = 0.5, bins = 100, lower = 0, upper = 1)
@@ -304,7 +306,7 @@ rel_sz_compare_one <- data.frame(rbind(c("truncated normal", "t"), rel_sz_compar
 
 ```
 
-## sz
+<!-- ## sz -->
 
 ```{r Fitting sz, message=FALSE, warning=FALSE, include=FALSE}
 par(mfrow = c(3, 2))
@@ -359,7 +361,7 @@ kable(sz_compare, caption = "st: Model Selection")
 
 ```
 
-## ster
+<!-- ## ster -->
 
 ```{r Fitting ster, message=FALSE, warning=FALSE, include=FALSE}
 par(mfrow = c(3, 2))
@@ -414,7 +416,7 @@ kable(ster_compare, caption = "st: Model Selection")
 
 ```
 
-# Model Selection: Representative distributions
+<!-- # Model Selection: Representative distributions -->
 
 ```{r Priors, message=FALSE, warning=FALSE, include=FALSE}
 
@@ -713,31 +715,101 @@ save(parameter_distributions, file = "../data/parameter_distributions.RData")
 ```
 
 
-```{r print tables, echo=FALSE, message=FALSE, warning=FALSE}
+```{r print tables, message=FALSE, warning=FALSE, include=FALSE}
 drift_compare
 colnames(drift_compare) <- c("Distribution Function", "AIC", "wAIC")
+rownames(drift_compare) <- NULL
 boundary_compare
+rownames(boundary_compare) <- NULL
 colnames(boundary_compare) <- c("Distribution Function", "AIC", "wAIC")
 start_compare
+rownames(start_compare) <- NULL
 colnames(start_compare) <- c("Distribution Function", "AIC", "wAIC")
 bias_compare
+rownames(bias_compare) <- NULL
 colnames(bias_compare) <- c("Distribution Function", "AIC", "wAIC")
 mirrored_bias_compare
 colnames(mirrored_bias_compare) <- c("Distribution Function", "AIC", "wAIC")
+rownames(mirrored_bias_compare) <- NULL
 ter_compare
+rownames(ter_compare) <- NULL
 colnames(ter_compare) <- c("Distribution Function", "AIC", "wAIC")
 sv_compare
+rownames(sv_compare) <- NULL
 colnames(sv_compare) <- c("Distribution Function", "AIC", "wAIC")
 sz_compare
+rownames(sz_compare) <- NULL
 colnames(sz_compare) <- c("Distribution Function", "AIC", "wAIC")
 relative_sz_compare
+rownames(relative_sz_compare) <- NULL
 colnames(relative_sz_compare) <- c("Distribution Function", "AIC", "wAIC")
 ster_compare
 colnames(ster_compare) <- c("Distribution Function", "AIC", "wAIC")
+rownames(ster_compare) <- NULL
 
 ```
 
+# Model Comparison
 
+## Drift Rate v
+\FloatBarrier
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+kable(drift_compare)
+```
+\FloatBarrier
 
+## Boundary Separation a
+\FloatBarrier
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+kable(boundary_compare)
+```
+
+## Mean start point z 
+\FloatBarrier
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+kable(start_compare)
+```
+\FloatBarrier
+
+## Bias z
+\FloatBarrier
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+kable(bias_compare)
+```
+\FloatBarrier
+
+## Mirrored Bias z
+\FloatBarrier
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+kable(mirrored_bias_compare)
+```
+\FloatBarrier
+
+## Non-decision time Ter
+\FloatBarrier
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+kable(ter_compare)
+```
+\FloatBarrier
+
+## across-trial variability drift rate sv
+\FloatBarrier
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+kable(sv_compare)
+```
+\FloatBarrier
+
+## relative across-trial variability sz
+\FloatBarrier
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+kable(relative_sz_compare)
+```
+\FloatBarrier
+
+## across-trial variability non-decision time ster
+\FloatBarrier
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+kable(ter_compare)
+```
 
 
