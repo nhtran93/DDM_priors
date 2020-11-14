@@ -11,7 +11,7 @@ library(knitr)
 ################################## Normal
 # Normal Distribution
 fit_Normal <- function(estimate, dis = "normal", bins = 50, txt = "estimate"){
-  model <- MASS::fitdistr(estimate, paste(dis))
+  model <- MASS::fitdistr(estimate, densfun = paste(dis), lower = -Inf, upper =Inf) 
   hist(estimate, pch=20, breaks = bins, prob=TRUE, main=paste(txt), xlab = "")
   curve(dnorm(x, model$estimate[1], model$estimate[2]), col="red", lwd=2, add=T)
   
@@ -132,9 +132,9 @@ fit_t <- function(estimate, txt = "estimate", breaks = 100){
        col = "grey", breaks = breaks)
   legend("topright", legend = c("Fit", "Data"), 
          col = c("red", "black"), lty=1, cex=0.8, bty = "n")
-  curve(dtt(x, fit_params$estimate['df'], fit_params$estimate['m'], fit_params$estimate['s'], lower = 0, upper = Inf),
+  curve(dtt(x, fit_params$estimate['df'], fit_params$estimate['m'], fit_params$estimate['s'], lower = -Inf, upper = Inf),
         add = TRUE, col = "red", lwd = 1.5)
-  lines(density(estimate, from = 0), col = "black", lwd = 1.5)
+  lines(density(estimate, from = -50), col = "black", lwd = 1.5)
   
   return(fit_params)
 }
@@ -214,7 +214,7 @@ dnormnorm <- function(x, mean, sd, mean1, sd1, prob, log=FALSE) {
 }
 
 
-mix_normal <- function(estimate,  mean, sd, mean1, sd1, prob, txt, method = "BFGS"){
+mix_normal <- function(estimate,  mean, sd, mean1, sd1, prob, txt, method = "L-BFGS"){
   
   mix <- fitdistr(estimate, dnormnorm,
                   start = list(mean = mean, sd = sd, mean1 = mean1,
