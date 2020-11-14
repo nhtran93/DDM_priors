@@ -40,7 +40,7 @@ Download all files from https://github.com/nhtran93/DDM_priors or https://osf.io
 
 If you use R, please set the working directory to the appropriate directory where you have saved these files. If you use RStudio, you can just open the respective RStudio project and the directory will be automatically set.
 
-You will only need to execute one R script: `code/DDM_priors_all.Rmd`. The [Rscript](code/DDM_priors_all.Rmd) contains all the code to fit the univariate and mixture distribution functions to the empirical distributions. `code/DDM_Fitting_Distributions.Rmd` calls necessary functions to execute the code from `code/helpers.R`. The [code](code/DDM_plots.R) to reproduce Figure 2 "Empirical distributions of the DDM parameter estimates" can be found here: `code/DDM_plots.R`. 
+You will only need to execute one R script: `code/DDM_priors_all.Rmd`. The [Rscript](code/DDM_priors_all.Rmd) contains all the code to fit the univariate and mixture distribution functions to the empirical distributions. `code/DDM_priors_all.Rmd` calls necessary functions to execute the code from `code/helpers.R`. The [code](code/DDM_plots.R) to reproduce Figure 2 "Empirical distributions of the DDM parameter estimates" can be found here: `code/DDM_plots.R`. 
 
 ## Run the SI analyses
 If you are are interested in fitting prior distributions to non-clinical studies, the random dot motion task or the lexical decision task, you can do this as well by executing the corresponding Rmarkdown file (i.e. `code/DDM_priors_non_clinical.Rmd`, `code/DDM_priors_random_dot_motion.Rmd`, `code/DDM_priors_lexical_decision_task.Rmd`). 
