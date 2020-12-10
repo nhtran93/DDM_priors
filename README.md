@@ -1,10 +1,10 @@
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
-# Systematic Parameter Reviews in Cognitive Modeling: Towards a Robust and Cumulative Characterization of Psychological Processes
+# Systematic Quantitative Parameter Reviews]{Systematic Parameter Reviews in Cognitive Modeling: Towards a Robust and Cumulative Characterization of Psychological Processes in the Diffusion Decision Model
 
 The following repository contains data and code used for analyses in:
 
-Tran, N.-H., van Maanen, L., Heathcote, A., Matzke, D. (submitted) Systematic Parameter Reviews in Cognitive Modeling: Towards a Robust and Cumulative Characterization of Psychological Processes.
+Tran, N.-H., van Maanen, L., Heathcote, A., Matzke, D. (submitted) Systematic Quantitative Parameter Reviews]{Systematic Parameter Reviews in Cognitive Modeling: Towards a Robust and Cumulative Characterization of Psychological Processes in the Diffusion Decision Model.
 
 ## Getting Started
 
